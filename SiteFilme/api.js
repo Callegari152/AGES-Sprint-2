@@ -3,8 +3,6 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Filmes from "./Filmes.js";
 
-MONGO_URI="mongodb+srv://lucacallegari71:Magmor40023072@cluster0.bfbil0s.mongodb.net/FilmesDB?retryWrites=true&w=majority&appName=Cluster0";
-
 dotenv.config();
 
 const app = express();
@@ -74,8 +72,21 @@ app.delete("/Filme/Excluir/:id", async (req, res) => {
     }
 });
 
+
+//REVIEWS ========================================================
+
+//READ REVIEW
+app.get("/Review/get/:id", async (req, res) => {
+    try{
+        const FindFilme = await Filmes.findById(req.params.id);
+        res.json(FindFilme.Reviews);
+    } catch (error) {
+        res.json({error : error});
+    }
+});
+
 //POST REVIEW
-app.post("/Filme/Review/:id", async (req, res) => {
+app.post("/Review/post/:id", async (req, res) => {
     try{
         const FindReview = await Filmes.findById(req.params.id)
         FindReview.Reviews.push(req.body.Reviews[0]);
@@ -86,13 +97,31 @@ app.post("/Filme/Review/:id", async (req, res) => {
     }
 });
 
-//DELETE REVIEW
-app.delete("/Filme/Review/Excluir/:id/:index", async (req, res) => {
+//PATCH REVIEW
+app.patch("/Review/patch/:id/:index", async (req, res) => {
     try{
         const getFilme = await Filmes.findById(req.params.id);
-        const ReviewExcluida = getFilme.Reviews.filter(item => item !== getFilme.Reviews[req.params.index])
-        const Reviews = await Filmes.findByIdAndUpdate(req.params.id, ReviewExcluida, { new: true });
-        res.json(Reviews);
+
+        const index = Number(req.params.index);
+        Object.assign(getFilme.Reviews[index], req.body);
+
+        await getFilme.save();
+        
+        res.json(getFilme.Reviews[index]);
+    } catch (error) {
+        res.json({error : error});
+    }
+});
+
+//DELETE REVIEW
+app.delete("/Review/Excluir/:id/:index", async (req, res) => {
+    try{
+        const Filme = await Filmes.findById(req.params.id);
+        Filme.Reviews.splice(Number(req.params.index) , 1);
+        
+        await Filme.save();
+
+        res.json(Filme.Reviews);
     } catch (error) {
         res.json({error : error});
     }
